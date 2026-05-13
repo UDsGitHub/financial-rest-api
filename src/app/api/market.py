@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.service.market_service import MarketService
 from app.service.watchlist_service import WatchlistService

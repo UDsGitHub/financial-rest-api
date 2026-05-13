@@ -36,7 +36,6 @@ class SeriesType(str, Enum):
     close = "close"
 
 
-class Indicators(BaseModel):
-    EMA: float | None = None
-    RSI: float | None = None
-    SMA: float | None = None
+class Indicator(BaseModel):
+    type: str
+    time_period: int | None = None

@@ -27,9 +27,10 @@ class MarketService:
             stock_symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
             if len(stock_symbol_info) < 2 or stock_symbol_info[1].close == 0:
                 percentage_change = 0
+            else:
+                change = stock_symbol_info[0].close - stock_symbol_info[1].close
+                percentage_change = (change / stock_symbol_info[1].close) * 100
 
-            change = stock_symbol_info[0].close - stock_symbol_info[1].close
-            percentage_change = (change / stock_symbol_info[1].close) * 100
             major_index_performances.append(
                 IndexPerfomance(symbol=symbol, percentage_change=percentage_change)
             )
@@ -58,10 +59,10 @@ class MarketService:
                     item.symbol
                 )
 
-                change = stock_symbol_info[0].close - stock_symbol_info[1].close
                 if stock_symbol_info[1].close == 0:
                     perc_change = 0
                 else:
+                    change = stock_symbol_info[0].close - stock_symbol_info[1].close
                     perc_change = (change / stock_symbol_info[1].close) * 100
                 perc_changes.append(perc_change)
 
