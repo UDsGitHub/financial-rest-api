@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 import httpx
 from app.config import config
 from app.schemas.stocks import OHLCV, TimeSeries
@@ -31,14 +32,17 @@ class AlphaVantageClient:
             )
             response_json = response.json()
 
-            if "Error Message" in response_json:
-                print(response_json["Error Message"])
-                return None
+            if "Error Message" in response_json or "Information" in response_json:
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Error fetching symbol details')
 
             time_series_key = f"Time Series ({time_series.title()})"
+            time_series_items = response_json[time_series_key].items()
             time_series_values: list[OHLCV] = []
 
-            for key, val in response_json[time_series_key].items():
+            if len(time_series_items) == 0:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Symbol price info not found')
+
+            for key, val in time_series_items:
                 ohlcv_value = OHLCV(
                     open=val["1. open"],
                     high=val["2. high"],
