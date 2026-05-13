@@ -5,7 +5,7 @@ description = "A simple financial REST API"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115.6",
+    "fastapi[standard]",
     "httpx>=0.28.1",
     "pydantic>=2.10.6",
     "pydantic-settings>=2.0.2",
