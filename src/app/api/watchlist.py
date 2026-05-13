@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from clients.alpha_vantage_client import AlphaVantageClient
-from service.watchlist_service import WatchlistService
+from app.clients.alpha_vantage_client import AlphaVantageClient
+from app.service.watchlist_service import WatchlistService
 
 watchlist_router = APIRouter(prefix='/watchlist')
 

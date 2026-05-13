@@ -1,4 +1,4 @@
-from clients.alpha_vantage_client import AlphaVantageClient
+from app.clients.alpha_vantage_client import AlphaVantageClient
 
 class MarketService:
     def __init__(self, alphavantage_client: AlphaVantageClient) -> None:

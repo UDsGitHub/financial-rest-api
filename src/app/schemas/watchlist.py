@@ -1,4 +1,4 @@
-from schemas.stocks import Symbol
+from app.schemas.stocks import Symbol
 
 class Watchlist:
     def __init__(self):

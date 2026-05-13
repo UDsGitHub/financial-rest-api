@@ -1,6 +1,6 @@
-from schemas.stocks import Symbol
-from schemas.watchlist import Watchlist
-from clients.alpha_vantage_client import AlphaVantageClient
+from app.schemas.stocks import Symbol
+from app.schemas.watchlist import Watchlist
+from app.clients.alpha_vantage_client import AlphaVantageClient
 
 watchlist = Watchlist()
 

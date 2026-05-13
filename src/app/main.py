@@ -1,8 +1,7 @@
 from fastapi import FastAPI
-
-from api.watchlist import watchlist_router
-from api.market import market_router
-from api.stocks import stocks_router
+from app.api.watchlist import watchlist_router
+from app.api.market import market_router
+from app.api.stocks import stocks_router
 
 app = FastAPI()
 
