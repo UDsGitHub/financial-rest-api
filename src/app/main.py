@@ -9,6 +9,7 @@ app = FastAPI()
 async def read_root():
     return {"message": "Welcome to FastStockRestAPI"}
 
+app.add_middleware()
 app.include_router(stocks_router)
 app.include_router(watchlist_router)
 app.include_router(market_router)
