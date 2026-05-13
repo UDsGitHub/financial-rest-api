@@ -4,7 +4,7 @@ class Watchlist:
     def __init__(self):
         self.__items: list[Symbol] = []
 
-    def get_items(self):
+    def get_items(self) -> list[Symbol]:
         return self.__items
 
     def has_item(self, symbol: str) -> bool:
