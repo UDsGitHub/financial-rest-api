@@ -1,0 +1,13 @@
+[project]
+name = "financial-rest-api"
+version = "0.1.0"
+description = "A simple financial REST API"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.6",
+    "httpx>=0.28.1",
+    "pydantic>=2.10.6",
+    "pydantic-settings>=2.0.2",
+    "python-dotenv>=1.0.1",
+]
