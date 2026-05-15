@@ -34,7 +34,6 @@ class AlphaVantageClient:
             # )
             # response_json = response.json()
             response_json = example_symbol_info
-            print('get_symbol_info')
             # print(response_json)
 
             if "Error Message" in response_json or "Information" in response_json:
