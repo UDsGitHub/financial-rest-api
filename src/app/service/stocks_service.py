@@ -137,20 +137,20 @@ class StocksService:
     async def get_stock_indicators(
         self,
         symbol: str,
-        indicators: list[str],
+        indicators: list[Indicator],
         interval: str = TimeInterval.DAILY,
-        series_type: str = SeriesType.close,
+        series_type: str = SeriesType.close.name,
     ):
         stock_symbol_info = await self.alphavantage_client.get_symbol_info(
             symbol, interval
         )
-        series_prices: list[float] = [price[series_type] for price in stock_symbol_info]
+        series_prices: list[float] = [price.get_series(series_type) for price in stock_symbol_info]
 
         indicator_values = {}
         for indicator in indicators:
-            indicator_values[indicator.type] = indicator_methods[indicator.type](
-                series_prices, indicator.time_period, series_type
-            )
+            indicator_values[indicator.type] = indicator_methods[
+                indicator.type.upper()
+            ](series_prices, indicator.time_period)
 
         return indicator_values
 
@@ -181,7 +181,7 @@ class StocksService:
                     indicator_key += f"_{indicator.time_period}"
                 matched_symbol["indicators"].append(
                     {
-                        indicator_key: indicator_methods[indicator.type](
+                        indicator_key: indicator_methods[indicator.type.upper()](
                             [price.close for price in stock_symbol_info],
                             indicator.time_period,
                         )

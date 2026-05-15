@@ -3,6 +3,7 @@ import httpx
 from app.config import config
 from app.schemas.stocks import OHLCV, TimeInterval
 from app.schemas.market import Market
+from app.clients.dummy import example_market_status, example_symbol_info
 
 BASE_URL = config.ALPHA_VANTAGE_BASE_URL
 API_KEY = config.ALPHA_VANTAGE_API_KEY
@@ -23,15 +24,18 @@ class AlphaVantageClient:
                 time_series_function = TimeInterval.value_map[TimeInterval.DAILY]
 
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{BASE_URL}",
-                params={
-                    "function": time_series_function,
-                    "symbol": symbol,
-                    "apikey": API_KEY,
-                },
-            )
-            response_json = response.json()
+            # response = await client.get(
+            #     f"{BASE_URL}",
+            #     params={
+            #         "function": time_series_function,
+            #         "symbol": symbol,
+            #         "apikey": API_KEY,
+            #     },
+            # )
+            # response_json = response.json()
+            response_json = example_symbol_info
+            print('get_symbol_info')
+            # print(response_json)
 
             if "Error Message" in response_json or "Information" in response_json:
                 raise HTTPException(
@@ -67,16 +71,19 @@ class AlphaVantageClient:
         self
     ) -> list[Market] | None:
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{BASE_URL}",
-                params={
-                    "function": 'MARKET_STATUS',
-                    "apikey": API_KEY,
-                },
-            )
-            response_json = response.json()
+            # response = await client.get(
+            #     f"{BASE_URL}",
+            #     params={
+            #         "function": 'MARKET_STATUS',
+            #         "apikey": API_KEY,
+            #     },
+            # )
+            # response_json = response.json()
+            response_json = example_market_status
+            print('get_market_status')
+            print(response_json)
 
-            if "Error Message" in response_json or "Information" in response_json or markets not in response_json or len(response_json['markets']) == 0:
+            if "Error Message" in response_json or "Information" in response_json or "markets" not in response_json or len(response_json['markets']) == 0:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Error fetching market summary",

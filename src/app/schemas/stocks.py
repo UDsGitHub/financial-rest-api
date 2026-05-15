@@ -20,6 +20,12 @@ class TimeInterval:
     }
 
 
+class SeriesType(str, Enum):
+    open = "open"
+    high = "high"
+    low = "low"
+    close = "close"
+
 class OHLCV(BaseModel):
     open: float
     high: float
@@ -28,14 +34,32 @@ class OHLCV(BaseModel):
     volume: float
     date: str
 
-
-class SeriesType(str, Enum):
-    open = "open"
-    high = "high"
-    low = "low"
-    close = "close"
+    def get_series(self, series_type: str):
+        match series_type:
+            case SeriesType.open.name:
+                return self.open
+            case SeriesType.high.name:
+                return self.high
+            case SeriesType.low.name:
+                return self.low
+            case SeriesType.close.name:
+                return self.close
+            case SeriesType.volume.name:
+                return self.volume
 
 
 class Indicator(BaseModel):
     type: str
     time_period: int | None = None
+
+class GetStockIndicatorsRequest(BaseModel):
+    indicators: list[Indicator]
+    interval: str = TimeInterval.DAILY
+    series_type: str = SeriesType.close.name
+
+
+class ScanMarketRequest(BaseModel):
+    symbols: list[str]
+    indicators: list[Indicator]
+    filters: list[str]
+

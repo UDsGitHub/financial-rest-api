@@ -39,10 +39,10 @@ class MarketService:
             if market.region != region:
                 pass
 
-            if market.current_status == MarketStatus.OPEN:
-                status[MarketStatus.OPEN] = market
+            if market.current_status == MarketStatus.OPEN.name:
+                status[MarketStatus.OPEN.name] = market
             else:
-                status[MarketStatus.CLOSED] = market
+                status[MarketStatus.CLOSED.name] = market
 
         response = {
             "major_index_performances": major_index_performances,

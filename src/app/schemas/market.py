@@ -19,4 +19,4 @@ class MarketStatus(str, Enum):
 
 class IndexPerfomance(BaseModel):
     symbol: str
-    percentage_change: str
+    percentage_change: float

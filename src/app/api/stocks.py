@@ -2,7 +2,13 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.service.stocks_service import StocksService
-from app.schemas.stocks import Indicator, TimeInterval
+from app.schemas.stocks import (
+    GetStockIndicatorsRequest,
+    Indicator,
+    ScanMarketRequest,
+    SeriesType,
+    TimeInterval,
+)
 
 stocks_router = APIRouter(prefix="/stocks")
 
@@ -16,11 +22,9 @@ async def get_symbol_price(symbol: str, time_series: str = TimeInterval.DAILY):
 
 
 @stocks_router.post("/indicators/{symbol}")
-async def get_stock_indicators(
-    symbol: str, indicators: list[Indicator], interval: str, series_type: str
-):
+async def get_stock_indicators(symbol: str, body: GetStockIndicatorsRequest):
     return await stocks_service.get_stock_indicators(
-        symbol, indicators, interval, series_type
+        symbol, body.indicators, body.interval, body.series_type
     )
 
 
@@ -39,13 +43,13 @@ async def get_stock_history(symbol: str, start_date: str, end_date: str):
 
 
 @stocks_router.post("/scan")
-async def scan_market(
-    symbols: list[str], indicators: list[Indicator], filters: list[str]
-):
-    matches = await stocks_service.scan_market(symbols, indicators, filters)
+async def scan_market(body: ScanMarketRequest):
+    matches = await stocks_service.scan_market(
+        body.symbols, body.indicators, body.filters
+    )
     return {
         "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "results": matches,
-        "total_scanned": len(symbols),
+        "total_scanned": len(body.symbols),
         "total_matched": len(matches),
     }

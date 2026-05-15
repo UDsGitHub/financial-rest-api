@@ -3,4 +3,4 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        
+        pass
