@@ -26,6 +26,7 @@ class SeriesType(str, Enum):
     low = "low"
     close = "close"
 
+
 class OHLCV(BaseModel):
     open: float
     high: float
@@ -52,6 +53,7 @@ class Indicator(BaseModel):
     type: str
     time_period: int | None = None
 
+
 class GetStockIndicatorsRequest(BaseModel):
     indicators: list[Indicator]
     interval: str = TimeInterval.DAILY
@@ -63,3 +65,15 @@ class ScanMarketRequest(BaseModel):
     indicators: list[Indicator]
     filters: list[str]
 
+
+class ScanMarketMatchedResult(BaseModel):
+    symbol: str
+    indicators: list
+    matched_filters: list
+
+
+class ScanMarketResponse(BaseModel):
+    timestamp: str
+    results: list[ScanMarketMatchedResult]
+    total_scanned: int
+    total_matched: int

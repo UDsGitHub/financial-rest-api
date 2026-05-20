@@ -1,5 +1,13 @@
+from datetime import datetime, timezone
 from app.clients.alpha_vantage_client import AlphaVantageClient
-from app.schemas.stocks import OHLCV, Indicator, SeriesType, TimeInterval
+from app.schemas.stocks import (
+    OHLCV,
+    Indicator,
+    ScanMarketResponse,
+    SeriesType,
+    TimeInterval,
+)
+from app.service.stocks.stocks_service_interface import IStocksService
 
 
 def get_ema(
@@ -124,7 +132,7 @@ filter_methods = {
 }
 
 
-class StocksService:
+class StocksService(IStocksService):
     def __init__(self, alphavantage_client: AlphaVantageClient) -> None:
         self.alphavantage_client = alphavantage_client
 
@@ -144,7 +152,9 @@ class StocksService:
         stock_symbol_info = await self.alphavantage_client.get_symbol_info(
             symbol, interval
         )
-        series_prices: list[float] = [price.get_series(series_type) for price in stock_symbol_info]
+        series_prices: list[float] = [
+            price.get_series(series_type) for price in stock_symbol_info
+        ]
 
         indicator_values = {}
         for indicator in indicators:
@@ -169,7 +179,7 @@ class StocksService:
 
     async def scan_market(
         self, symbols: list[str], indicators: list[Indicator], filters: list[str]
-    ) -> list:
+    ) -> ScanMarketResponse:
         matches = []
         for symbol in symbols:
             stock_symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
@@ -198,4 +208,9 @@ class StocksService:
             if filter_match:
                 matches.append(matched_symbol)
 
-        return matches
+        return {
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "results": matches,
+            "total_scanned": len(symbols),
+            "total_matched": len(matches),
+        }

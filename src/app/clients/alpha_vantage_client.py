@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 import httpx
-from app.config import config
+from app.core.config import config
 from app.schemas.stocks import OHLCV, TimeInterval
 from app.schemas.market import Market
 from app.clients.dummy import example_market_status, example_symbol_info
@@ -24,22 +24,22 @@ class AlphaVantageClient:
                 time_series_function = TimeInterval.value_map[TimeInterval.DAILY]
 
         async with httpx.AsyncClient() as client:
-            # response = await client.get(
-            #     f"{BASE_URL}",
-            #     params={
-            #         "function": time_series_function,
-            #         "symbol": symbol,
-            #         "apikey": API_KEY,
-            #     },
-            # )
-            # response_json = response.json()
-            response_json = example_symbol_info
+            response = await client.get(
+                f"{BASE_URL}",
+                params={
+                    "function": time_series_function,
+                    "symbol": symbol,
+                    "apikey": API_KEY,
+                },
+            )
+            response_json = response.json()
+            # response_json = example_symbol_info
             # print(response_json)
 
             if "Error Message" in response_json or "Information" in response_json:
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error fetching symbol details",
+                    detail=f"Error fetching symbol details, symbol={symbol}",
                 )
 
             time_series_key = f"Time Series ({time_interval.title()})"
@@ -49,7 +49,7 @@ class AlphaVantageClient:
             if len(time_series_items) == 0:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Symbol price info not found",
+                    detail=f"Symbol price info not found, symbol={symbol}",
                 )
 
             for key, val in time_series_items:
@@ -70,17 +70,17 @@ class AlphaVantageClient:
         self
     ) -> list[Market] | None:
         async with httpx.AsyncClient() as client:
-            # response = await client.get(
-            #     f"{BASE_URL}",
-            #     params={
-            #         "function": 'MARKET_STATUS',
-            #         "apikey": API_KEY,
-            #     },
-            # )
-            # response_json = response.json()
-            response_json = example_market_status
-            print('get_market_status')
-            print(response_json)
+            response = await client.get(
+                f"{BASE_URL}",
+                params={
+                    "function": 'MARKET_STATUS',
+                    "apikey": API_KEY,
+                },
+            )
+            response_json = response.json()
+            # response_json = example_market_status
+            # print('get_market_status')
+            # print(response_json)
 
             if "Error Message" in response_json or "Information" in response_json or "markets" not in response_json or len(response_json['markets']) == 0:
                 raise HTTPException(

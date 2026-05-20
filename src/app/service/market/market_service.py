@@ -1,11 +1,12 @@
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.schemas.market import IndexPerfomance, MarketStatus
-from app.service.watchlist_service import WatchlistService
+from app.service.watchlist.watchlist_service import WatchlistService
+from app.service.market.market_service_interface import IMarketService
 
 MAJOR_INDEXES = ["SPY", "QQQ", "DIA"]
 
 
-class MarketService:
+class MarketService(IMarketService):
     def __init__(
         self,
         alphavantage_client: AlphaVantageClient,
@@ -14,9 +15,9 @@ class MarketService:
         self.alphavantage_client = alphavantage_client
         self.watchlist_service = watchlist_service
 
-    async def get_market_status(self, region: str | None = None):
+    async def get_market_status(self, ip: str, region: str | None = None):
         markets = await self.alphavantage_client.get_market_status()
-        watchlist = await self.watchlist_service.get_items()
+        watchlist = await self.watchlist_service.get_items(ip)
         status = {
             MarketStatus.OPEN: [],
             MarketStatus.CLOSED: [],

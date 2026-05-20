@@ -1,12 +1,10 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 from app.clients.alpha_vantage_client import AlphaVantageClient
-from app.service.stocks_service import StocksService
+from app.service.stocks.stocks_service import StocksService
 from app.schemas.stocks import (
     GetStockIndicatorsRequest,
-    Indicator,
     ScanMarketRequest,
-    SeriesType,
     TimeInterval,
 )
 
@@ -44,12 +42,4 @@ async def get_stock_history(symbol: str, start_date: str, end_date: str):
 
 @stocks_router.post("/scan")
 async def scan_market(body: ScanMarketRequest):
-    matches = await stocks_service.scan_market(
-        body.symbols, body.indicators, body.filters
-    )
-    return {
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "results": matches,
-        "total_scanned": len(body.symbols),
-        "total_matched": len(matches),
-    }
+    return await stocks_service.scan_market(body.symbols, body.indicators, body.filters)
