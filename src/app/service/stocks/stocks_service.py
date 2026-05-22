@@ -178,12 +178,29 @@ class StocksService(IStocksService):
         ]
 
     async def scan_market(
-        self, symbols: list[str], indicators: list[Indicator], filters: list[str]
+        self,
+        symbols: list[str],
+        indicators: list[Indicator],
+        filters: list[str],
     ) -> ScanMarketResponse:
         matches = []
         for symbol in symbols:
             stock_symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
             matched_symbol = {"symbol": symbol, "indicators": [], "matched_filters": []}
+
+            if len(filters) > 0:
+                filter_match = True
+                for stock_filter in filters:
+                    filter_match = filter_match and filter_methods[stock_filter](stock_symbol_info)
+                    if not filter_match:
+                        break
+                    matched_symbol["matched_filters"].append(stock_filter)
+                        
+
+                if filter_match:
+                    matches.append(matched_symbol)
+            else:
+                matches.append(matched_symbol)
 
             for indicator in indicators:
                 indicator_key = indicator.type
@@ -197,16 +214,6 @@ class StocksService(IStocksService):
                         )
                     }
                 )
-
-            filter_match = False
-            for stock_filter in filters:
-                filter_match = filter_match and filter_methods[filter](
-                    stock_symbol_info
-                )
-                matched_symbol["matched_filters"].append(stock_filter)
-
-            if filter_match:
-                matches.append(matched_symbol)
 
         return {
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

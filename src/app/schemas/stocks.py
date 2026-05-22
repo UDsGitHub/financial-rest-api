@@ -25,6 +25,7 @@ class SeriesType(str, Enum):
     high = "high"
     low = "low"
     close = "close"
+    volume = "volume"
 
 
 class OHLCV(BaseModel):

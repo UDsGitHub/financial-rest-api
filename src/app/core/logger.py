@@ -6,3 +6,5 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger('financial-api')
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)

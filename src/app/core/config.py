@@ -10,5 +10,6 @@ class Config:
     REDIS_PORT: str = os.getenv("REDIS_PORT")
     REDIS_USERNAME: str = os.getenv("REDIS_USERNAME")
     REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD")
+    TTL: int = int(os.getenv("TTL", "60"))
 
 config = Config()

@@ -3,6 +3,7 @@ from app.api.watchlist import watchlist_router
 from app.api.market import market_router
 from app.api.stocks import stocks_router
 from app.middleware.rate_limit import RateLimitMiddleware
+import app.core.logger
 
 app = FastAPI()
 

@@ -27,16 +27,22 @@ class WatchlistService(IWatchlistService):
                 for id in item_ids:
                     pipe.hgetall(f"{key}:set:{id}")
             results = await pipe.execute()
-            
+
             items = []
             for result in results:
-                symbol_info = await self.alphavantage_client.get_symbol_info(result['symbol'])
-                item = Symbol(symbol=result['symbol'], price=symbol_info[0].close, date=result['date'])
+                symbol_info = await self.alphavantage_client.get_symbol_info(
+                    result["symbol"]
+                )
+                item = Symbol(
+                    symbol=result["symbol"],
+                    price=symbol_info[0].close,
+                    date=result["date"],
+                )
                 items.append(item)
             return items
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
-            items = watchlist.get_items()
+            items = watchlist.get_items(ip)
         return items
 
     async def add_item(self, ip: str, symbol: str):
@@ -63,16 +69,17 @@ class WatchlistService(IWatchlistService):
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
 
-            if watchlist.has_item(symbol):
+            if watchlist.has_item(ip, symbol):
                 raise HTTPException(
                     status.HTTP_409_CONFLICT,
                     detail=f"Symbol {symbol} already in watchlist",
                 )
             symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
             return watchlist.add_item(
+                ip,
                 Symbol(
                     symbol=symbol, price=symbol_info[0].close, date=symbol_info[0].date
-                )
+                ),
             )
 
     async def remove_item(self, ip: str, symbol: str):
@@ -84,4 +91,6 @@ class WatchlistService(IWatchlistService):
                 await redis_client.srem(f"{key}:list", symbol)
             return await self.get_items(ip)
         except redis.ConnectionError:
-            return watchlist.remove_item(symbol)
+            logger.warning(LoggerConstants.CACHE_CONN_ERR)
+
+            return watchlist.remove_item(ip, symbol)

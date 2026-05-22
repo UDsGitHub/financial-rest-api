@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.service.stocks.stocks_service import StocksService
 from app.schemas.stocks import (
@@ -19,14 +19,14 @@ async def get_symbol_price(symbol: str, time_series: str = TimeInterval.DAILY):
     return await stocks_service.get_stock_price(symbol, time_series)
 
 
-@stocks_router.post("/indicators/{symbol}")
+@stocks_router.post("/{symbol}/indicators")
 async def get_stock_indicators(symbol: str, body: GetStockIndicatorsRequest):
     return await stocks_service.get_stock_indicators(
         symbol, body.indicators, body.interval, body.series_type
     )
 
 
-@stocks_router.get("/history/{symbol}")
+@stocks_router.get("/{symbol}/history")
 async def get_stock_history(symbol: str, start_date: str, end_date: str):
     try:
         start_date_val = datetime.strptime(start_date, "%Y-%m-%d")

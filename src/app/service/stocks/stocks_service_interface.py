@@ -1,5 +1,11 @@
 from abc import ABC, abstractmethod
-from app.schemas.stocks import OHLCV, Indicator, SeriesType, TimeInterval
+from app.schemas.stocks import (
+    OHLCV,
+    Indicator,
+    ScanMarketResponse,
+    SeriesType,
+    TimeInterval,
+)
 
 
 class IStocksService(ABC):
@@ -26,5 +32,5 @@ class IStocksService(ABC):
     @abstractmethod
     async def scan_market(
         self, symbols: list[str], indicators: list[Indicator], filters: list[str]
-    ) -> list:
+    ) -> ScanMarketResponse:
         pass

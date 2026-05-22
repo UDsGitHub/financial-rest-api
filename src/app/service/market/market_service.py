@@ -18,10 +18,7 @@ class MarketService(IMarketService):
     async def get_market_status(self, ip: str, region: str | None = None):
         markets = await self.alphavantage_client.get_market_status()
         watchlist = await self.watchlist_service.get_items(ip)
-        status = {
-            MarketStatus.OPEN: [],
-            MarketStatus.CLOSED: [],
-        }
+        status = {}
         major_index_performances = []
 
         for symbol in MAJOR_INDEXES:
@@ -37,13 +34,19 @@ class MarketService(IMarketService):
             )
 
         for market in markets:
-            if market.region != region:
-                pass
+            if region is not None and market.region != region:
+                continue
+
+            if market.region not in status:
+                status[market.region] = {
+                    MarketStatus.OPEN.name: [],
+                    MarketStatus.CLOSED.name: [],
+                }
 
             if market.current_status == MarketStatus.OPEN.name:
-                status[MarketStatus.OPEN.name] = market
+                status[market.region][MarketStatus.OPEN.name].append(market)
             else:
-                status[MarketStatus.CLOSED.name] = market
+                status[market.region][MarketStatus.CLOSED.name].append(market)
 
         response = {
             "major_index_performances": major_index_performances,
@@ -60,21 +63,21 @@ class MarketService(IMarketService):
                     item.symbol
                 )
 
-                if stock_symbol_info[1].close == 0:
+                if len(stock_symbol_info) < 2 or stock_symbol_info[1].close == 0:
                     perc_change = 0
                 else:
                     change = stock_symbol_info[0].close - stock_symbol_info[1].close
                     perc_change = (change / stock_symbol_info[1].close) * 100
-                perc_changes.append(perc_change)
+                perc_changes.append((item.symbol, perc_change))
 
-                perc_changes.sort(reverse=True)
-                for change in perc_changes:
-                    if change > 0:
-                        gainers.append(change)
+            perc_changes = sorted(perc_changes, key=lambda x: x[1], reverse=True)
+            for change in perc_changes:
+                if change[1] > 0:
+                    gainers.append({"symbol": change[0], "change": f"{change[1]}%"})
 
-                for change in reversed(perc_changes):
-                    if change < 0:
-                        losers.append(change)
+            for change in sorted(perc_changes, key=lambda x: x[1]):
+                if change[1] < 0:
+                    losers.append({"symbol": change[0], "change": f"{change[1]}%"})
 
             response["watchlist"] = {
                 "gainers": gainers,
