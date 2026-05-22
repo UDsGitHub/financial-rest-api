@@ -4,10 +4,13 @@ class Watchlist:
     def __init__(self):
         self.__items: dict[str, list[Symbol]] = {}
 
-    def get_items(self, ip: str) -> dict[str, list[Symbol]]:
+    def get_items(self, ip: str) -> list[Symbol]:
         if ip not in self.__items:
             self.__items[ip] = []
         return self.__items[ip]
+
+    def get_symbols(self, ip: str) -> list[str]:
+        return [item.symbol for item in self.get_items(ip)]
 
     def has_item(self, ip: str, symbol: str) -> bool:
         if ip not in self.__items:

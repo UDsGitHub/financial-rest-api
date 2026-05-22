@@ -17,7 +17,7 @@ class MarketService(IMarketService):
 
     async def get_market_status(self, ip: str, region: str | None = None):
         markets = await self.alphavantage_client.get_market_status()
-        watchlist = await self.watchlist_service.get_items(ip)
+        watchlist_symbols = await self.watchlist_service.get_symbols(ip)
         status = {}
         major_index_performances = []
 
@@ -53,22 +53,22 @@ class MarketService(IMarketService):
             "status": status,
         }
 
-        if len(watchlist) > 0:
+        if len(watchlist_symbols) > 0:
             gainers = []
             losers = []
-            perc_changes: list[float] = []
+            perc_changes: list[tuple[str, float]] = []
 
-            for item in watchlist:
+            for symbol in watchlist_symbols:
                 stock_symbol_info = await self.alphavantage_client.get_symbol_info(
-                    item.symbol
+                    symbol
                 )
 
                 if len(stock_symbol_info) < 2 or stock_symbol_info[1].close == 0:
-                    perc_change = 0
+                    perc_change = 0.0
                 else:
                     change = stock_symbol_info[0].close - stock_symbol_info[1].close
                     perc_change = (change / stock_symbol_info[1].close) * 100
-                perc_changes.append((item.symbol, perc_change))
+                perc_changes.append((symbol, perc_change))
 
             perc_changes = sorted(perc_changes, key=lambda x: x[1], reverse=True)
             for change in perc_changes:

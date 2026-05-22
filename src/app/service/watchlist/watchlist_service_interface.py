@@ -7,6 +7,10 @@ class IWatchlistService(ABC):
         pass
 
     @abstractmethod
+    async def get_symbols(self, ip: str) -> list[str]:
+        pass
+
+    @abstractmethod
     async def add_item(self, ip: str, symbol: str):
         pass
 

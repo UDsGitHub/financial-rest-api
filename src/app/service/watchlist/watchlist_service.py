@@ -18,6 +18,15 @@ class WatchlistService(IWatchlistService):
     def get_watchlist_key(self, ip: str):
         return f"users:{ip}:watchlist"
 
+    async def get_symbols(self, ip: str) -> list[str]:
+        key = self.get_watchlist_key(ip)
+        try:
+            symbols = await redis_client.smembers(f"{key}:list")
+            return list(symbols)
+        except redis.ConnectionError:
+            logger.warning(LoggerConstants.CACHE_CONN_ERR)
+            return watchlist.get_symbols(ip)
+
     async def get_items(self, ip: str):
         key = self.get_watchlist_key(ip)
         try:
