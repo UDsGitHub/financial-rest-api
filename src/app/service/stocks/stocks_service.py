@@ -191,29 +191,23 @@ class StocksService(IStocksService):
             if len(filters) > 0:
                 filter_match = True
                 for stock_filter in filters:
-                    filter_match = filter_match and filter_methods[stock_filter](stock_symbol_info)
+                    filter_match = filter_match and filter_methods[stock_filter](
+                        stock_symbol_info
+                    )
                     if not filter_match:
                         break
                     matched_symbol["matched_filters"].append(stock_filter)
-                        
 
                 if filter_match:
+                    matched_symbol["indicators"] = self.__get_indicator_info(
+                        indicators, stock_symbol_info
+                    )
                     matches.append(matched_symbol)
             else:
-                matches.append(matched_symbol)
-
-            for indicator in indicators:
-                indicator_key = indicator.type
-                if indicator.time_period is not None:
-                    indicator_key += f"_{indicator.time_period}"
-                matched_symbol["indicators"].append(
-                    {
-                        indicator_key: indicator_methods[indicator.type.upper()](
-                            [price.close for price in stock_symbol_info],
-                            indicator.time_period,
-                        )
-                    }
+                matched_symbol["indicators"] = self.__get_indicator_info(
+                    indicators, stock_symbol_info
                 )
+                matches.append(matched_symbol)
 
         return {
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -221,3 +215,23 @@ class StocksService(IStocksService):
             "total_scanned": len(symbols),
             "total_matched": len(matches),
         }
+
+
+    def __get_indicator_info(
+        self, indicators: list[Indicator], stock_symbol_info: list[OHLCV]
+    ):
+        results = []
+        for indicator in indicators:
+            indicator_key = indicator.type
+            if indicator.time_period is not None:
+                indicator_key += f"_{indicator.time_period}"
+            results.append(
+                {
+                    indicator_key: indicator_methods[indicator.type.upper()](
+                        [price.close for price in stock_symbol_info],
+                        indicator.time_period,
+                    )
+                }
+            )
+
+        return results

@@ -21,13 +21,13 @@ class Watchlist:
         if ip not in self.__items:
             self.__items[ip] = []
         self.__items[ip].append(new_item)
-        return self.__items[ip]
+        return new_item
     
-    def remove_item(self, ip: str, delete_item: str) -> dict[str, Symbol]:
+    def remove_item(self, ip: str, delete_item: str) -> str:
         if ip not in self.__items:
             self.__items[ip] = []
-            return self.__items[ip]
+            return delete_item
 
         self.__items[ip] = list(filter(lambda item: item.symbol != delete_item, self.__items[ip]))
-        return self.__items[ip]
+        return delete_item
         

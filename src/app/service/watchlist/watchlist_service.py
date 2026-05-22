@@ -74,7 +74,11 @@ class WatchlistService(IWatchlistService):
                 },
             )
             await redis_client.sadd(f"{key}:list", symbol)
-            return await self.get_items(ip)
+            return Symbol(
+                symbol=symbol,
+                price=symbol_info[0].close,
+                date=symbol_info[0].date,
+            )
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
 
@@ -98,7 +102,7 @@ class WatchlistService(IWatchlistService):
             if has_symbol:
                 await redis_client.unlink(f"{key}:set:{symbol}")
                 await redis_client.srem(f"{key}:list", symbol)
-            return await self.get_items(ip)
+            return symbol
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
 

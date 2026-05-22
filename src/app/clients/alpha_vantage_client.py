@@ -5,7 +5,6 @@ import redis
 from app.core.config import config
 from app.schemas.stocks import OHLCV, TimeInterval
 from app.schemas.market import Market
-from app.clients.dummy import example_market_status, example_symbol_info
 from app.clients.redis_client import redis_client
 from app.core.logger import logger
 from app.schemas.logger import LoggerConstants
