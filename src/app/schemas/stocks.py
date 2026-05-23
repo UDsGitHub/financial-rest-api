@@ -55,6 +55,11 @@ class Indicator(BaseModel):
     time_period: int | None = None
 
 
+class ScanFilter(BaseModel):
+    type: str
+    value: float | None
+
+
 class GetStockIndicatorsRequest(BaseModel):
     indicators: list[Indicator]
     interval: str = TimeInterval.DAILY
@@ -64,7 +69,7 @@ class GetStockIndicatorsRequest(BaseModel):
 class ScanMarketRequest(BaseModel):
     symbols: list[str]
     indicators: list[Indicator]
-    filters: list[str]
+    filters: list[ScanFilter]
 
 
 class ScanMarketMatchedResult(BaseModel):

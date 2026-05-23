@@ -2,6 +2,8 @@ from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.schemas.market import IndexPerfomance, MarketStatus
 from app.services.watchlist.watchlist_service import WatchlistService
 from app.services.market.market_service_interface import IMarketService
+from app.domain.metrics import day_over_day_percent_change
+
 
 MAJOR_INDEXES = ["SPY", "QQQ", "DIA"]
 
@@ -23,12 +25,7 @@ class MarketService(IMarketService):
 
         for symbol in MAJOR_INDEXES:
             stock_symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
-            if len(stock_symbol_info) < 2 or stock_symbol_info[1].close == 0:
-                percentage_change = 0
-            else:
-                change = stock_symbol_info[0].close - stock_symbol_info[1].close
-                percentage_change = (change / stock_symbol_info[1].close) * 100
-
+            percentage_change = day_over_day_percent_change(stock_symbol_info)
             major_index_performances.append(
                 IndexPerfomance(symbol=symbol, percentage_change=percentage_change)
             )
@@ -63,11 +60,7 @@ class MarketService(IMarketService):
                     symbol
                 )
 
-                if len(stock_symbol_info) < 2 or stock_symbol_info[1].close == 0:
-                    perc_change = 0.0
-                else:
-                    change = stock_symbol_info[0].close - stock_symbol_info[1].close
-                    perc_change = (change / stock_symbol_info[1].close) * 100
+                perc_change = day_over_day_percent_change(stock_symbol_info)
                 perc_changes.append((symbol, perc_change))
 
             perc_changes = sorted(perc_changes, key=lambda x: x[1], reverse=True)

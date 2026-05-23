@@ -140,7 +140,7 @@ class AlphaVantageClient:
             await self.log_api_request(composed_key, json.dumps(response_json))
 
         markets = response_json["markets"]
-        response: list[Market] = []
+        response = []
         for val in markets:
             primary_exchanges = val["primary_exchanges"].split(", ")
             market_val = Market(

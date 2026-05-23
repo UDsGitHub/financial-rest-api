@@ -8,6 +8,7 @@ from app.core.logger import logger
 from app.schemas.logger import LoggerConstants
 from app.services.watchlist.watchlist_service_interface import IWatchlistService
 
+
 watchlist = Watchlist()
 
 
