@@ -6,7 +6,7 @@ from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.clients.redis_client import redis_client
 from app.core.logger import logger
 from app.schemas.logger import LoggerConstants
-from app.service.watchlist.watchlist_service_interface import IWatchlistService
+from app.services.watchlist.watchlist_service_interface import IWatchlistService
 
 watchlist = Watchlist()
 

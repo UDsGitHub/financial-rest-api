@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Request, status
 from app.clients.alpha_vantage_client import AlphaVantageClient
-from app.service.stocks.stocks_service import StocksService
+from app.services.stocks.stocks_service import StocksService
 from app.schemas.stocks import (
     GetStockIndicatorsRequest,
     ScanMarketRequest,

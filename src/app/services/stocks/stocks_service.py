@@ -7,7 +7,7 @@ from app.schemas.stocks import (
     SeriesType,
     TimeInterval,
 )
-from app.service.stocks.stocks_service_interface import IStocksService
+from app.services.stocks.stocks_service_interface import IStocksService
 
 
 def get_ema(
@@ -209,13 +209,12 @@ class StocksService(IStocksService):
                 )
                 matches.append(matched_symbol)
 
-        return {
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "results": matches,
-            "total_scanned": len(symbols),
-            "total_matched": len(matches),
-        }
-
+        return ScanMarketResponse(
+            timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            results=matches,
+            total_scanned=len(symbols),
+            total_matched=len(matches),
+        )
 
     def __get_indicator_info(
         self, indicators: list[Indicator], stock_symbol_info: list[OHLCV]

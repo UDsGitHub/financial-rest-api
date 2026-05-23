@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from app.clients.alpha_vantage_client import AlphaVantageClient
-from app.service.market.market_service import MarketService
-from app.service.watchlist.watchlist_service import WatchlistService
+from app.services.market.market_service import MarketService
+from app.services.watchlist.watchlist_service import WatchlistService
 
 market_router = APIRouter(prefix="/market")
 

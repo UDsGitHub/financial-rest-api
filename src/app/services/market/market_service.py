@@ -1,7 +1,7 @@
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.schemas.market import IndexPerfomance, MarketStatus
-from app.service.watchlist.watchlist_service import WatchlistService
-from app.service.market.market_service_interface import IMarketService
+from app.services.watchlist.watchlist_service import WatchlistService
+from app.services.market.market_service_interface import IMarketService
 
 MAJOR_INDEXES = ["SPY", "QQQ", "DIA"]
 
