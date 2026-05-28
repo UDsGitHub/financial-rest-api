@@ -19,10 +19,7 @@ class AlphaVantageClient:
 
     async def log_api_request(self, key: str, value: str):
         try:
-            pipe = await redis_client.pipeline()
-            pipe.set(key, value)
-            pipe.expire(key, config.TTL)
-            await pipe.execute()
+            await redis_client.set(key, value, ex=config.TTL)
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
 
@@ -71,7 +68,7 @@ class AlphaVantageClient:
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=f"Error fetching symbol details, symbol={symbol}",
             )
-            
+
         if cache_value is None:
             await self.log_api_request(composed_key, json.dumps(response_json))
 

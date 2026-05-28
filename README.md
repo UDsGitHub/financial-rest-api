@@ -23,8 +23,9 @@ Interactive API docs: **http://127.0.0.1:8000/docs** (when running locally).
 
 ## Prerequisites
 
-- Python 3.12+
-- Redis (local or remote)
+- Python 3.12+ (local development)
+- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose (production-style local runs and EC2)
 - Alpha Vantage API key ([free tier](https://www.alphavantage.co/support/#api-key))
 
 ## Project structure
@@ -34,23 +35,13 @@ src/app/
 ├── api/              # Route handlers (stocks, watchlist, market)
 ├── clients/          # Alpha Vantage & Redis clients
 ├── core/             # Config, logging
+├── domain/           # Pure indicator / filter / metric logic
 ├── middleware/       # Rate limiting
 ├── schemas/          # Pydantic models
-└── service/          # Business logic
+└── services/         # Business logic
 ```
 
-## Setup
-
-### 1. Install dependencies
-
-From the repository root (uses [uv](https://github.com/astral-sh/uv) or pip):
-
-```bash
-uv sync
-# or: pip install -e .
-```
-
-### 2. Configure environment
+## Configuration
 
 Copy the example env file and add your secrets (`.env` is gitignored):
 
@@ -58,25 +49,128 @@ Copy the example env file and add your secrets (`.env` is gitignored):
 cp .env.example .env
 ```
 
-Edit `.env` and set at least `ALPHA_VANTAGE_API_KEY`. See `.env.example` for all variables.
+| Variable | Purpose |
+|----------|---------|
+| `ALPHA_VANTAGE_API_KEY` | Required for live market data |
+| `ALPHA_VANTAGE_BASE_URL` | Usually `https://www.alphavantage.co/query` |
+| `REDIS_URL` | Redis hostname (see below) |
+| `REDIS_PORT` | Redis port (usually `6379`) |
+| `REDIS_USERNAME` / `REDIS_PASSWORD` | Optional; leave empty for local Redis |
+| `TTL` | Cache TTL in seconds for successful AV responses (default `60`) |
 
-### 3. Start Redis
+**Where Redis points depends on how you run the API:**
+
+| How you run | `REDIS_URL` | Notes |
+|-------------|-------------|--------|
+| API on host (`fastapi dev`) | `localhost` | Use `.env.local` for local overrides (loaded after `.env`) |
+| `docker compose up` | `redis` | Set automatically in `docker-compose.yml` (Compose service name) |
+| EC2 with Compose | `redis` | Same as compose; do **not** use `localhost` inside the API container |
+
+`src/app/core/config.py` loads `.env` then `.env.local` (override) from the repo root.
+
+## Local development (API on host)
+
+### 1. Install dependencies
+
+From the repository root:
 
 ```bash
-redis-server
-# or: docker run -d -p 6379:6379 redis:alpine
+uv sync
 ```
 
-### 4. Run the API
+### 2. Start Redis
+
+Use **one** Redis instance for both the API and `redis-cli`. On macOS, Homebrew Redis and Docker often both bind port **6379**; the API uses `localhost` and usually hits **brew Redis**, while `docker exec … redis-cli` talks to the **container** (a separate database).
+
+**Homebrew / local Redis only**
+
+```bash
+brew services start redis
+redis-cli KEYS '*'
+```
+
+**Docker Redis only** (stop brew first)
+
+```bash
+brew services stop redis
+docker run -d --name redis -p 6379:6379 redis:alpine
+docker exec -it redis redis-cli KEYS '*'
+```
+
+**Docker on host port 6380** (keep brew on 6379)
+
+```bash
+docker run -d --name redis -p 6380:6379 redis:alpine
+# in .env.local: REDIS_PORT=6380
+```
+
+Verify you are on the same Redis as the app:
+
+```bash
+lsof -i :6379
+redis-cli -h 127.0.0.1 -p 6379 DBSIZE
+docker exec redis redis-cli DBSIZE   # should match if only Docker uses 6379
+```
+
+### 3. Run the API
 
 From the `src` directory:
 
 ```bash
 cd src
-fastapi dev app/main.py --reload
+uv run fastapi dev app/main.py --reload
 ```
 
-The server listens on **http://127.0.0.1:8000** by default.
+Docs: **http://127.0.0.1:8000/docs**
+
+### 4. Run tests
+
+From the repository root:
+
+```bash
+uv run pytest
+```
+
+## Docker Compose (API + Redis)
+
+Runs the API and Redis as two containers on one host (local prod-like setup or EC2).
+
+```bash
+cp .env.example .env   # add ALPHA_VANTAGE_API_KEY at minimum
+docker compose up --build
+```
+
+- API: **http://127.0.0.1:8000**
+- Compose sets `REDIS_URL=redis` and `REDIS_PORT=6379` for the API container (overrides `.env` for Redis host).
+- Redis data is persisted in the named volume `redis_data` mounted at `/data` inside the Redis container (survives `docker compose restart`; removed with `docker compose down -v`).
+
+Inspect cache keys (from the host):
+
+```bash
+docker compose exec redis redis-cli KEYS 'cache:*'
+docker compose exec redis redis-cli TTL 'cache:api-requests:...'
+```
+
+Remember cached keys expire after `TTL` seconds (default 60).
+
+## Deploying to AWS EC2 (Option B)
+
+Self-hosted Redis on the same instance as the API via Docker Compose (no Redis Cloud required in production).
+
+1. Launch an EC2 instance (e.g. Ubuntu 22.04) with security group rules for SSH (`22`) and HTTP (`8000`, or `80`/`443` if you add a reverse proxy).
+2. Install Docker and the Compose plugin on the instance.
+3. Clone the repo and create `.env` on the server with at least `ALPHA_VANTAGE_API_KEY` (and other vars from `.env.example`).
+4. From the repo root on EC2:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+5. Open `http://<ec2-public-ip>:8000/docs` to verify.
+
+Compose wires the API to Redis using the hostname `redis` on the internal Docker network. You do not need Cloud Redis URLs in production `.env` unless you choose a managed Redis service later.
+
+**Optional hardening:** put Nginx or Caddy in front of the API on 443, restrict Redis so port `6379` is not exposed publicly (the default compose file does not publish Redis to the host), and use IAM/instance roles or Secrets Manager for env secrets instead of committing `.env`.
 
 ## Rate limiting
 
@@ -266,10 +360,11 @@ curl "http://127.0.0.1:8000/market/status?region=United%20States"
 
 ## Roadmap
 
-- [ ] Docker / docker-compose
-- [ ] AWS EC2 deployment
+- [x] Docker / docker-compose
+- [x] AWS EC2 deployment (see [Deploying to AWS EC2](#deploying-to-aws-ec2-option-b))
 - [ ] Scan filter thresholds in request body
 - [ ] Optional authentication beyond client IP
+- [ ] HTTPS reverse proxy and production secrets on EC2
 
 ## License
 
