@@ -44,7 +44,20 @@ These affect how you use the API:
 | DELETE | `/watchlist/{symbol}` | Remove a symbol |
 | GET | `/market/status` | Market hours, SPY/QQQ/DIA performance, watchlist movers. Query: optional `region` |
 
-**Scan filters:** `above_ema_20`, `above_sma_50`, `ema_crossover`, `price_min`, `price_max`, `volume_min`, `perc_change_min`, `perc_change_max` (threshold filters are not yet configurable in the request body).
+**Scan filters** — each filter is `{ "type": "<name>", "value": <number> | null }`. All listed filters must pass (AND). Empty `filters` includes every symbol.
+
+| Filter | `value` required | Description |
+|--------|------------------|-------------|
+| `above_ema_20` | No | Latest close above 20-period EMA |
+| `above_sma_50` | No | Latest close above 50-period SMA |
+| `ema_crossover` | No | 12-period EMA above 26-period EMA |
+| `price_min` | Yes | Close ≥ `value` |
+| `price_max` | Yes | Close ≤ `value` |
+| `volume_min` | Yes | Volume ≥ `value` |
+| `perc_change_min` | Yes | Absolute % change vs prior bar ≥ `value` |
+| `perc_change_max` | Yes | Absolute % change vs prior bar ≤ `value` |
+
+Threshold filters with a missing or null `value` never match.
 
 **Status codes:** `400` invalid dates · `404` not found · `409` symbol already on watchlist · `429` rate limit · `503` upstream error or rate limit
 
@@ -68,10 +81,10 @@ curl -X POST "$BASE/stocks/IBM/indicators" \
   -H "Content-Type: application/json" \
   -d '{"indicators":[{"type":"RSI","time_period":14}]}'
 
-# Scan
+# Scan (built-in filter + threshold filter)
 curl -X POST "$BASE/stocks/scan" \
   -H "Content-Type: application/json" \
-  -d '{"symbols":["AAPL","MSFT"],"indicators":[{"type":"RSI","time_period":14}],"filters":["above_ema_20"]}'
+  -d '{"symbols":["AAPL","MSFT"],"indicators":[{"type":"RSI","time_period":14}],"filters":[{"type":"above_ema_20"},{"type":"price_min","value":100}]}'
 
 # Watchlist
 curl -X POST "$BASE/watchlist/AAPL"
