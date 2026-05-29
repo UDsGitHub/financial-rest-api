@@ -172,6 +172,70 @@ Compose wires the API to Redis using the hostname `redis` on the internal Docker
 
 **Optional hardening:** put Nginx or Caddy in front of the API on 443, restrict Redis so port `6379` is not exposed publicly (the default compose file does not publish Redis to the host), and use IAM/instance roles or Secrets Manager for env secrets instead of committing `.env`.
 
+### Automated deployment (GitHub Actions)
+
+After tests pass on a **push to `main`**, the [Deploy workflow](.github/workflows/deploy.yml) SSHs into EC2 and runs [`scripts/deploy.sh`](scripts/deploy.sh) (`git pull` + `docker compose up -d --build`).
+
+#### One-time EC2 setup for `git pull`
+
+The instance must pull from GitHub without a password prompt. Use a **read-only deploy key**:
+
+```bash
+# On EC2
+ssh-keygen -t ed25519 -C "ec2-deploy" -f ~/.ssh/github_deploy -N ""
+cat ~/.ssh/github_deploy.pub
+```
+
+In GitHub: **Repo → Settings → Deploy keys → Add deploy key** (read-only). Paste the public key.
+
+```bash
+# On EC2 — use the deploy key for GitHub
+cat >> ~/.ssh/config <<'EOF'
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/github_deploy
+  IdentitiesOnly yes
+EOF
+chmod 600 ~/.ssh/config ~/.ssh/github_deploy
+
+# Clone with SSH (if not already cloned)
+git clone git@github.com:<your-username>/financial-rest-api.git ~/financial-rest-api
+cd ~/financial-rest-api
+cp .env.example .env && nano .env   # production secrets, once
+docker compose up -d --build
+```
+
+#### GitHub repository secrets
+
+**Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret | Value |
+|--------|--------|
+| `EC2_HOST` | Public IP or Elastic IP (e.g. `34.200.251.106`) |
+| `EC2_USER` | `ubuntu` (Ubuntu AMI) |
+| `EC2_SSH_KEY` | Full contents of your `.pem` private key |
+| `EC2_APP_PATH` | Optional; default `~/financial-rest-api` |
+
+#### Security group note
+
+GitHub-hosted runners use **dynamic IP addresses**. For SSH deploy to work, port **22** must be reachable from the runner. Options:
+
+- **Portfolio / demo:** allow SSH from `0.0.0.0/0` (weaker; prefer a dedicated deploy user and key rotation).
+- **Tighter:** use a [self-hosted runner](https://docs.github.com/en/actions/hosting-your-own-runners) on EC2, or AWS SSM instead of SSH.
+
+#### Flow
+
+```
+push to main → CI (pytest) → Deploy workflow → SSH → scripts/deploy.sh
+```
+
+Manual deploy on the server (same as the script):
+
+```bash
+bash ~/financial-rest-api/scripts/deploy.sh
+```
+
 ## Rate limiting
 
 - **25 requests per minute** per client IP (`request.client.host`)
@@ -362,9 +426,10 @@ curl "http://127.0.0.1:8000/market/status?region=United%20States"
 
 - [x] Docker / docker-compose
 - [x] AWS EC2 deployment (see [Deploying to AWS EC2](#deploying-to-aws-ec2-option-b))
+- [x] CI deploy to EC2 on push to `main` (see [Automated deployment](#automated-deployment-github-actions))
 - [ ] Scan filter thresholds in request body
 - [ ] Optional authentication beyond client IP
-- [ ] HTTPS reverse proxy and production secrets on EC2
+- [ ] HTTPS reverse proxy and Elastic IP
 
 ## License
 
