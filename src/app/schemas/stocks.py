@@ -60,6 +60,11 @@ class ScanFilter(BaseModel):
     value: float | None
 
 
+class GetStocksPriceResponse(BaseModel):
+    symbol: str
+    price: float
+
+
 class GetStockIndicatorsRequest(BaseModel):
     indicators: list[Indicator]
     interval: str = TimeInterval.DAILY

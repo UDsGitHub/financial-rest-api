@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.schemas.stocks import (
     OHLCV,
+    GetStocksPriceResponse,
     Indicator,
     ScanFilter,
     ScanMarketResponse,
@@ -20,7 +21,7 @@ class StocksService(IStocksService):
         stock_symbol_info = await self.alphavantage_client.get_symbol_info(
             symbol, time_series
         )
-        return stock_symbol_info[0].close
+        return GetStocksPriceResponse(symbol=symbol, price=stock_symbol_info[0].close)
 
     async def get_stock_indicators(
         self,
