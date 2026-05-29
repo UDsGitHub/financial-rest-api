@@ -133,44 +133,99 @@ uv run pytest
 
 ## Docker Compose (API + Redis)
 
-Runs the API and Redis as two containers on one host (local prod-like setup or EC2).
+**Local (API on port 8000, no HTTPS):**
 
 ```bash
 cp .env.example .env   # add ALPHA_VANTAGE_API_KEY at minimum
-docker compose up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-- API: **http://127.0.0.1:8000**
-- Compose sets `REDIS_URL=redis` and `REDIS_PORT=6379` for the API container (overrides `.env` for Redis host).
-- Redis data is persisted in the named volume `redis_data` mounted at `/data` inside the Redis container (survives `docker compose restart`; removed with `docker compose down -v`).
+**Production-style (EC2 — Caddy HTTPS on 443):**
 
-Inspect cache keys (from the host):
+```bash
+# .env must include DOMAIN=api.yourdomain.com (and ACME_EMAIL optional)
+docker compose --profile prod up -d --build
+```
+
+- Local dev: **http://127.0.0.1:8000**
+- Production: `https://api.yourdomain.com/docs` (Caddy terminates TLS and proxies to `api:8000`)
+- Compose sets `REDIS_URL=redis` for the API container (overrides `.env` Redis host).
+- Redis data persists in `redis_data`; Caddy certs in `caddy_data` (survive restarts; removed with `docker compose --profile prod down -v`).
+
+Inspect cache keys on the server:
 
 ```bash
 docker compose exec redis redis-cli KEYS 'cache:*'
-docker compose exec redis redis-cli TTL 'cache:api-requests:...'
 ```
 
 Remember cached keys expire after `TTL` seconds (default 60).
 
 ## Deploying to AWS EC2 (Option B)
 
-Self-hosted Redis on the same instance as the API via Docker Compose (no Redis Cloud required in production).
+Self-hosted Redis + API on one instance via Docker Compose. Production uses **Caddy** for automatic HTTPS (Let's Encrypt).
 
-1. Launch an EC2 instance (e.g. Ubuntu 22.04) with security group rules for SSH (`22`) and HTTP (`8000`, or `80`/`443` if you add a reverse proxy).
-2. Install Docker and the Compose plugin on the instance.
-3. Clone the repo and create `.env` on the server with at least `ALPHA_VANTAGE_API_KEY` (and other vars from `.env.example`).
-4. From the repo root on EC2:
+### 1. Launch EC2 and security group
 
-   ```bash
-   docker compose up -d --build
-   ```
+| Type | Port | Source | Purpose |
+|------|------|--------|---------|
+| SSH | 22 | Your IP (or GitHub Actions for deploy) | Admin / CI deploy |
+| HTTP | 80 | `0.0.0.0/0` | Let's Encrypt + redirect to HTTPS |
+| HTTPS | 443 | `0.0.0.0/0` | Public API |
 
-5. Open `http://<ec2-public-ip>:8000/docs` to verify.
+Do **not** expose Redis (`6379`). After HTTPS works, you can remove public **8000** — the API is only reachable via Caddy on the Docker network.
 
-Compose wires the API to Redis using the hostname `redis` on the internal Docker network. You do not need Cloud Redis URLs in production `.env` unless you choose a managed Redis service later.
+### 2. Elastic IP (stable public address)
 
-**Optional hardening:** put Nginx or Caddy in front of the API on 443, restrict Redis so port `6379` is not exposed publicly (the default compose file does not publish Redis to the host), and use IAM/instance roles or Secrets Manager for env secrets instead of committing `.env`.
+Without an Elastic IP, stop/start changes your public IP and breaks DNS.
+
+1. **EC2 → Elastic IPs → Allocate Elastic IP address**
+2. **Actions → Associate Elastic IP address** → select your instance
+3. Use this IP for DNS and for the `EC2_HOST` GitHub secret
+
+### 3. Domain and DNS
+
+1. Register or use a domain (Route 53, Cloudflare, etc.).
+2. Create an **A record** pointing to your **Elastic IP**:
+
+   | Name | Type | Value |
+   |------|------|--------|
+   | `api` (or `@`) | A | `34.x.x.x` (your Elastic IP) |
+
+3. Wait for DNS to propagate (`dig api.yourdomain.com`).
+
+HTTPS will not issue until the domain resolves to this server.
+
+### 4. Install Docker and clone the repo
+
+Same as before — install Docker + Compose plugin, clone with a deploy key, create `.env` on the server:
+
+```bash
+cp .env.example .env
+nano .env
+```
+
+Production `.env` must include at least:
+
+```env
+ALPHA_VANTAGE_API_KEY=your_key
+DOMAIN=api.yourdomain.com
+ACME_EMAIL=you@example.com
+```
+
+### 5. Start with HTTPS
+
+```bash
+docker compose --profile prod up -d --build
+```
+
+Verify:
+
+- `https://api.yourdomain.com/docs`
+- `curl -I https://api.yourdomain.com/`
+
+Caddy obtains and renews certificates automatically. First request may take a few seconds while certs are issued.
+
+Compose wires the API to Redis on hostname `redis`. Cloud Redis URLs in `.env` are not required on EC2.
 
 ### Automated deployment (GitHub Actions)
 
@@ -202,8 +257,8 @@ chmod 600 ~/.ssh/config ~/.ssh/github_deploy
 # Clone with SSH (if not already cloned)
 git clone git@github.com:<your-username>/financial-rest-api.git ~/financial-rest-api
 cd ~/financial-rest-api
-cp .env.example .env && nano .env   # production secrets, once
-docker compose up -d --build
+cp .env.example .env && nano .env   # API key + DOMAIN + ACME_EMAIL
+docker compose --profile prod up -d --build
 ```
 
 #### GitHub repository secrets
@@ -212,7 +267,7 @@ docker compose up -d --build
 
 | Secret | Value |
 |--------|--------|
-| `EC2_HOST` | Public IP or Elastic IP (e.g. `34.200.251.106`) |
+| `EC2_HOST` | **Elastic IP** (stable; update if you re-associate) |
 | `EC2_USER` | `ubuntu` (Ubuntu AMI) |
 | `EC2_SSH_KEY` | Full contents of your `.pem` private key |
 | `EC2_APP_PATH` | Optional; default `~/financial-rest-api` |
@@ -427,9 +482,9 @@ curl "http://127.0.0.1:8000/market/status?region=United%20States"
 - [x] Docker / docker-compose
 - [x] AWS EC2 deployment (see [Deploying to AWS EC2](#deploying-to-aws-ec2-option-b))
 - [x] CI deploy to EC2 on push to `main` (see [Automated deployment](#automated-deployment-github-actions))
+- [x] Elastic IP + HTTPS (Caddy + Let's Encrypt)
 - [ ] Scan filter thresholds in request body
 - [ ] Optional authentication beyond client IP
-- [ ] HTTPS reverse proxy and Elastic IP
 
 ## License
 

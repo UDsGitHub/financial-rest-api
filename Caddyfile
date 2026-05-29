@@ -1,0 +1,8 @@
+# Production TLS (Let's Encrypt). Set DOMAIN and optional ACME_EMAIL in .env on EC2.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	reverse_proxy api:8000
+}

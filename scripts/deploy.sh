@@ -8,5 +8,5 @@ git fetch origin main
 git checkout main
 git pull --ff-only origin main
 
-docker compose up -d --build
-docker compose ps
+docker compose --profile prod up -d --build
+docker compose --profile prod ps
