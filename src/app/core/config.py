@@ -9,11 +9,13 @@ load_dotenv(ROOT / ".env.local", override=True)
 
 class Config:
     ALPHA_VANTAGE_API_KEY: str = os.getenv("ALPHA_VANTAGE_API_KEY")
-    ALPHA_VANTAGE_BASE_URL: str = os.getenv("ALPHA_VANTAGE_BASE_URL")
-    REDIS_URL: str = os.getenv("REDIS_URL")
-    REDIS_PORT: str = os.getenv("REDIS_PORT")
-    REDIS_USERNAME: str = os.getenv("REDIS_USERNAME")
-    REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD")
+    ALPHA_VANTAGE_BASE_URL: str = os.getenv(
+        "ALPHA_VANTAGE_BASE_URL", "https://www.alphavantage.co/query"
+    )
+    REDIS_URL: str = os.getenv("REDIS_URL", "localhost")
+    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
+    REDIS_USERNAME: str | None = os.getenv("REDIS_USERNAME") or None
+    REDIS_PASSWORD: str | None = os.getenv("REDIS_PASSWORD") or None
     TTL: int = int(os.getenv("TTL", "60"))
 
 config = Config()
