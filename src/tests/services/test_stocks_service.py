@@ -21,9 +21,10 @@ class TestStocksService:
 
     @pytest.mark.asyncio
     async def test_get_stock_price(self, service, fake_av):
-        price = await service.get_stock_price("IBM", TimeInterval.DAILY)
+        response = await service.get_stock_price("IBM", TimeInterval.DAILY)
 
-        assert price == 218.37
+        assert response.symbol == "IBM"
+        assert response.price == 218.37
         fake_av.get_symbol_info.assert_awaited_once_with("IBM", TimeInterval.DAILY)
 
     @pytest.mark.asyncio
