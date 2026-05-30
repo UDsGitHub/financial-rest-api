@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Request
-from app.clients.alpha_vantage_client import AlphaVantageClient
+from typing import Annotated
+from fastapi import APIRouter, Depends, Request
+from app.core.dependencies import get_market_service
 from app.services.market.market_service import MarketService
-from app.services.watchlist.watchlist_service import WatchlistService
 
 market_router = APIRouter(prefix="/market")
 
-alphavantage_client = AlphaVantageClient()
-watchlist_service = WatchlistService(alphavantage_client)
-market_service = MarketService(alphavantage_client, watchlist_service)
+MarketServiceDep = Annotated[MarketService, Depends(get_market_service)]
 
 
 @market_router.get("/status")
-async def get_market_status(request: Request, region: str | None = None):
+async def get_market_status(
+    request: Request,
+    market_service: MarketServiceDep,
+    region: str | None = None,
+):
     return await market_service.get_market_status(request.client.host, region)

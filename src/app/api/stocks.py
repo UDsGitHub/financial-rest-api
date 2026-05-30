@@ -1,33 +1,46 @@
-from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException, Request, status
-from app.clients.alpha_vantage_client import AlphaVantageClient
-from app.services.stocks.stocks_service import StocksService
+from datetime import datetime
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.dependencies import get_stocks_service
 from app.schemas.stocks import (
     GetStockIndicatorsRequest,
     ScanMarketRequest,
     TimeInterval,
 )
+from app.services.stocks.stocks_service import StocksService
 
 stocks_router = APIRouter(prefix="/stocks")
 
-alphavantage_client = AlphaVantageClient()
-stocks_service = StocksService(alphavantage_client)
+StocksServiceDep = Annotated[StocksService, Depends(get_stocks_service)]
 
 
 @stocks_router.get("/{symbol}")
-async def get_symbol_price(symbol: str, time_series: str = TimeInterval.DAILY):
+async def get_symbol_price(
+    symbol: str,
+    stocks_service: StocksServiceDep,
+    time_series: str = TimeInterval.DAILY,
+):
     return await stocks_service.get_stock_price(symbol, time_series)
 
 
 @stocks_router.post("/{symbol}/indicators")
-async def get_stock_indicators(symbol: str, body: GetStockIndicatorsRequest):
+async def get_stock_indicators(
+    symbol: str,
+    body: GetStockIndicatorsRequest,
+    stocks_service: StocksServiceDep,
+):
     return await stocks_service.get_stock_indicators(
         symbol, body.indicators, body.interval, body.series_type
     )
 
 
 @stocks_router.get("/{symbol}/history")
-async def get_stock_history(symbol: str, start_date: str, end_date: str):
+async def get_stock_history(
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    stocks_service: StocksServiceDep,
+):
     try:
         start_date_val = datetime.strptime(start_date, "%Y-%m-%d")
         end_date_val = datetime.strptime(end_date, "%Y-%m-%d")
@@ -41,5 +54,5 @@ async def get_stock_history(symbol: str, start_date: str, end_date: str):
 
 
 @stocks_router.post("/scan")
-async def scan_market(body: ScanMarketRequest):
+async def scan_market(body: ScanMarketRequest, stocks_service: StocksServiceDep):
     return await stocks_service.scan_market(body.symbols, body.indicators, body.filters)
