@@ -19,7 +19,7 @@ class AlphaVantageClient:
 
     async def log_api_request(self, key: str, value: str):
         try:
-            await redis_client.set(key, value, ex=config.TTL)
+            await redis_client.set(key, value, ex=config.CACHE_TTL)
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
 

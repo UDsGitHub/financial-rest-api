@@ -16,6 +16,8 @@ class Config:
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
     REDIS_USERNAME: str | None = os.getenv("REDIS_USERNAME") or None
     REDIS_PASSWORD: str | None = os.getenv("REDIS_PASSWORD") or None
-    TTL: int = int(os.getenv("TTL", "60"))
+    CACHE_TTL: int = int(os.getenv("CACHE_TTL", "86400"))
+    RATE_LIMIT_WINDOW: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
+    MAX_REQUESTS_PER_MINUTE: int = int(os.getenv("MAX_REQUESTS_PER_MINUTE", "4"))
 
 config = Config()

@@ -17,12 +17,16 @@ cp .env.example .env
 
 Add your `ALPHA_VANTAGE_API_KEY`. Optional: copy to `.env.local` for overrides (gitignored; loaded after `.env`).
 
-| Variable | Local default |
-|----------|----------------|
-| `ALPHA_VANTAGE_API_KEY` | Required |
-| `REDIS_URL` | `localhost` |
-| `REDIS_PORT` | `6379` (use `6380` if Docker Redis maps host 6380→6379) |
-| `TTL` | `60` |
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `ALPHA_VANTAGE_API_KEY` | — | Required |
+| `REDIS_URL` | `localhost` | |
+| `REDIS_PORT` | `6379` | Use `6380` if Docker Redis maps host 6380→6379 |
+| `CACHE_TTL` | `86400` | Seconds to cache successful AV responses (24h; matches daily bar data) |
+| `RATE_LIMIT_WINDOW` | `60` | Rate-limit window in seconds |
+| `MAX_REQUESTS_PER_MINUTE` | `4` | Max HTTP requests per IP per window |
+
+For faster cache turnover while developing, set a lower `CACHE_TTL` in `.env.local` (e.g. `300`).
 
 See `.env.example` for all variables. Production-only vars (`DOMAIN`, `ACME_EMAIL`) are not needed locally.
 

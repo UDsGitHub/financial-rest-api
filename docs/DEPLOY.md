@@ -75,6 +75,10 @@ Production `.env` minimum:
 ALPHA_VANTAGE_API_KEY=...
 DOMAIN=api.yourdomain.com
 ACME_EMAIL=you@example.com
+# Optional — defaults in config.py if omitted:
+# CACHE_TTL=86400
+# RATE_LIMIT_WINDOW=60
+# MAX_REQUESTS_PER_MINUTE=4
 ```
 
 Compose overrides Redis to `REDIS_URL=redis` / `REDIS_PORT=6379` for the API container. Cloud Redis not required on EC2.

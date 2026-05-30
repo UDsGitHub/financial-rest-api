@@ -23,10 +23,10 @@ These affect how you use the API:
 
 | Topic | Detail |
 |-------|--------|
-| **Rate limit** | 25 requests per minute per client IP. Exceeding returns `429`. |
-| **Caching** | Successful upstream responses are cached (~60s by default). Repeated identical queries may return cached data. |
+| **Rate limit** | 4 HTTP requests per minute per client IP by default (`429` when exceeded). Protects abuse; configurable via env on the server. |
+| **Caching** | Successful Alpha Vantage responses are cached (default **24 hours** for symbol data). Data is **daily OHLCV** (latest bar is typically the previous trading day), not live intraday quotes. Repeated identical upstream queries return cached data. |
 | **Watchlist** | Stored per client IP — no login. Your list is tied to the IP the server sees (behind a proxy, that is usually your public IP). |
-| **Upstream limits** | Alpha Vantage free tier is ~5 calls/minute. Heavy scan or watchlist use can hit `503` when upstream is rate-limited. |
+| **Upstream limits** | Alpha Vantage free tier is ~**5 calls/minute** and ~**25/day** per API key (shared by all users of this deployment). Endpoints like **scan**, **watchlist**, and **market status** can trigger multiple upstream calls per request; heavy use may return `503`. |
 
 ---
 
