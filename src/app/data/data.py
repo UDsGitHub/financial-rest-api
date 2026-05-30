@@ -1,3 +1,5 @@
+MAJOR_INDEXES = ["SPY", "QQQ", "DIA"]
+
 example_symbol_info = {
     "Meta Data": {
         "1. Information": "Daily Prices (open, high, low, close) and Volumes",

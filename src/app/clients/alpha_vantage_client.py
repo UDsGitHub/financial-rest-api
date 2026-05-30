@@ -4,7 +4,7 @@ import httpx
 import redis
 from app.clients.av_budget import reserve_upstream_call
 from app.core.config import config
-from app.schemas.stocks import OHLCV, TimeInterval
+from app.schemas.stocks import OHLCV, TIME_SERIES_FUNCTIONS, TimeInterval
 from app.schemas.market import Market
 from app.clients.redis_client import redis_client
 from app.core.logger import logger
@@ -34,17 +34,9 @@ class AlphaVantageClient:
             return response.json()
 
     async def get_symbol_info(
-        self, symbol: str, time_interval: str = "DAILY"
+        self, symbol: str, time_interval: TimeInterval = TimeInterval.DAILY
     ) -> list[OHLCV]:
-        match time_interval:
-            case TimeInterval.DAILY:
-                time_series_function = TimeInterval.value_map[TimeInterval.DAILY]
-            case TimeInterval.WEEKLY:
-                time_series_function = TimeInterval.value_map[TimeInterval.WEEKLY]
-            case TimeInterval.MONTHLY:
-                time_series_function = TimeInterval.value_map[TimeInterval.MONTHLY]
-            case _:
-                time_series_function = TimeInterval.value_map[TimeInterval.DAILY]
+        time_series_function = TIME_SERIES_FUNCTIONS[time_interval]
 
         cache_key = self.get_cache_key()
         request_path = f"{BASE_URL}?function={time_series_function}&symbol={symbol}"
@@ -73,7 +65,7 @@ class AlphaVantageClient:
         if cache_value is None:
             await self._log_api_request(composed_key, json.dumps(response_json))
 
-        time_series_key = f"Time Series ({time_interval.title()})"
+        time_series_key = f"Time Series ({time_interval.value.title()})"
         time_series_items = response_json[time_series_key].items()
         time_series_values: list[OHLCV] = []
 

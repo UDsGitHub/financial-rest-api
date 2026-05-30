@@ -10,7 +10,7 @@ from app.schemas.stocks import (
 
 class IStocksService(ABC):
     @abstractmethod
-    async def get_stock_price(self, symbol: str, time_series: str) -> float:
+    async def get_stock_price(self, symbol: str, time_series: TimeInterval) -> float:
         pass
 
     @abstractmethod
@@ -18,8 +18,8 @@ class IStocksService(ABC):
         self,
         symbol: str,
         indicators: list[Indicator],
-        interval: str = TimeInterval.DAILY,
-        series_type: str = SeriesType.close.name,
+        interval: TimeInterval = TimeInterval.DAILY,
+        series_type: SeriesType = SeriesType.close,
     ):
         pass
 

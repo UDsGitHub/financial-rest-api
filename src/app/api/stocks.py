@@ -18,7 +18,7 @@ StocksServiceDep = Annotated[StocksService, Depends(get_stocks_service)]
 async def get_symbol_price(
     symbol: str,
     stocks_service: StocksServiceDep,
-    time_series: str = TimeInterval.DAILY,
+    time_series: TimeInterval = TimeInterval.DAILY,
 ):
     return await stocks_service.get_stock_price(symbol, time_series)
 

@@ -19,7 +19,7 @@ class StocksService(IStocksService):
     def __init__(self, alphavantage_client: AlphaVantageClient) -> None:
         self.alphavantage_client = alphavantage_client
 
-    async def get_stock_price(self, symbol: str, time_series: str) -> float:
+    async def get_stock_price(self, symbol: str, time_series: TimeInterval) -> float:
         stock_symbol_info = await self.alphavantage_client.get_symbol_info(
             symbol, time_series
         )
@@ -29,8 +29,8 @@ class StocksService(IStocksService):
         self,
         symbol: str,
         indicators: list[Indicator],
-        interval: str = TimeInterval.DAILY,
-        series_type: str = SeriesType.close.name,
+        interval: TimeInterval = TimeInterval.DAILY,
+        series_type: SeriesType = SeriesType.close,
     ):
         stock_symbol_info = await self.alphavantage_client.get_symbol_info(
             symbol, interval
@@ -41,7 +41,7 @@ class StocksService(IStocksService):
 
         indicator_values = {}
         for indicator in indicators:
-            indicator_values[indicator.type] = INDICATORS[indicator.type.upper()](
+            indicator_values[indicator.type.value] = INDICATORS[indicator.type](
                 series_prices, indicator.time_period
             )
 
@@ -93,9 +93,9 @@ class StocksService(IStocksService):
                         break
 
                     filter_key = (
-                        stock_filter.type
+                        stock_filter.type.value
                         if stock_filter.value is None
-                        else f"{stock_filter.type}-{stock_filter.value}"
+                        else f"{stock_filter.type.value}-{stock_filter.value}"
                     )
                     matched_symbol["matched_filters"].append(filter_key)
 
@@ -122,12 +122,12 @@ class StocksService(IStocksService):
     ):
         results = []
         for indicator in indicators:
-            indicator_key = indicator.type
+            indicator_key = indicator.type.value
             if indicator.time_period is not None:
                 indicator_key += f"_{indicator.time_period}"
             results.append(
                 {
-                    indicator_key: INDICATORS[indicator.type.upper()](
+                    indicator_key: INDICATORS[indicator.type](
                         [price.close for price in stock_symbol_info],
                         indicator.time_period,
                     )

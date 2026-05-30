@@ -5,7 +5,14 @@ from fastapi import HTTPException
 from unittest.mock import AsyncMock
 
 from app.core.config import config
-from app.schemas.stocks import Indicator, ScanFilter, SeriesType, TimeInterval
+from app.schemas.stocks import (
+    Indicator,
+    IndicatorType,
+    ScanFilter,
+    ScanFilterType,
+    SeriesType,
+    TimeInterval,
+)
 from app.services.stocks.stocks_service import StocksService
 from tests.data.test_data import test_symbol_info
 
@@ -33,9 +40,9 @@ class TestStocksService:
     async def test_get_stock_indicators(self, service):
         indicators = await service.get_stock_indicators(
             symbol="IBM",
-            indicators=[Indicator(type="EMA", time_period=20)],
+            indicators=[Indicator(type=IndicatorType.EMA, time_period=20)],
             interval=TimeInterval.DAILY,
-            series_type=SeriesType.close.name,
+            series_type=SeriesType.close,
         )
 
         assert "EMA" in indicators
@@ -61,8 +68,8 @@ class TestStocksService:
     async def test_scan_market(self, service):
         scan_result = await service.scan_market(
             ["IBM"],
-            [Indicator(type="EMA", time_period=20)],
-            [ScanFilter(type="price_min", value=10)],
+            [Indicator(type=IndicatorType.EMA, time_period=20)],
+            [ScanFilter(type=ScanFilterType.price_min, value=10)],
         )
 
         assert scan_result.total_scanned == 1

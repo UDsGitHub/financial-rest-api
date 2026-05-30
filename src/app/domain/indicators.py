@@ -1,3 +1,6 @@
+from app.schemas.stocks import IndicatorType
+
+
 def get_ema(
     series_prices: list[float],
     time_period: int,
@@ -46,8 +49,8 @@ def get_sma(
     return sum(series_prices[:time_period]) / time_period
 
 
-INDICATORS: dict[str, callable] = {
-    "EMA": get_ema,
-    "RSI": get_rsi,
-    "SMA": get_sma,
+INDICATORS: dict[IndicatorType, callable] = {
+    IndicatorType.EMA: get_ema,
+    IndicatorType.RSI: get_rsi,
+    IndicatorType.SMA: get_sma,
 }

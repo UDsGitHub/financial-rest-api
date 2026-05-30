@@ -8,16 +8,17 @@ class Symbol(BaseModel):
     date: str
 
 
-class TimeInterval:
+class TimeInterval(str, Enum):
     DAILY = "DAILY"
     WEEKLY = "WEEKLY"
     MONTHLY = "MONTHLY"
 
-    value_map = {
-        DAILY: "TIME_SERIES_DAILY",
-        WEEKLY: "TIME_SERIES_WEEKLY",
-        MONTHLY: "TIME_SERIES_MONTHLY",
-    }
+
+TIME_SERIES_FUNCTIONS = {
+    TimeInterval.DAILY: "TIME_SERIES_DAILY",
+    TimeInterval.WEEKLY: "TIME_SERIES_WEEKLY",
+    TimeInterval.MONTHLY: "TIME_SERIES_MONTHLY",
+}
 
 
 class SeriesType(str, Enum):
@@ -36,28 +37,45 @@ class OHLCV(BaseModel):
     volume: float
     date: str
 
-    def get_series(self, series_type: str):
+    def get_series(self, series_type: SeriesType):
         match series_type:
-            case SeriesType.open.name:
+            case SeriesType.open:
                 return self.open
-            case SeriesType.high.name:
+            case SeriesType.high:
                 return self.high
-            case SeriesType.low.name:
+            case SeriesType.low:
                 return self.low
-            case SeriesType.close.name:
+            case SeriesType.close:
                 return self.close
-            case SeriesType.volume.name:
+            case SeriesType.volume:
                 return self.volume
 
 
+class IndicatorType(str, Enum):
+    EMA = "EMA"
+    RSI = "RSI"
+    SMA = "SMA"
+
+
+class ScanFilterType(str, Enum):
+    price_min = "price_min"
+    price_max = "price_max"
+    volume_min = "volume_min"
+    perc_change_min = "perc_change_min"
+    perc_change_max = "perc_change_max"
+    above_ema_20 = "above_ema_20"
+    above_sma_50 = "above_sma_50"
+    ema_crossover = "ema_crossover"
+
+
 class Indicator(BaseModel):
-    type: str
+    type: IndicatorType
     time_period: int | None = None
 
 
 class ScanFilter(BaseModel):
-    type: str
-    value: float | None
+    type: ScanFilterType
+    value: float | None = None
 
 
 class GetStocksPriceResponse(BaseModel):
@@ -67,8 +85,8 @@ class GetStocksPriceResponse(BaseModel):
 
 class GetStockIndicatorsRequest(BaseModel):
     indicators: list[Indicator]
-    interval: str = TimeInterval.DAILY
-    series_type: str = SeriesType.close.name
+    interval: TimeInterval = TimeInterval.DAILY
+    series_type: SeriesType = SeriesType.close
 
 
 class ScanMarketRequest(BaseModel):

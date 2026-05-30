@@ -1,11 +1,9 @@
 from app.clients.alpha_vantage_client import AlphaVantageClient
+from app.data.data import MAJOR_INDEXES
 from app.schemas.market import IndexPerfomance, MarketStatus
 from app.services.watchlist.watchlist_service import WatchlistService
 from app.services.market.market_service_interface import IMarketService
 from app.domain.metrics import day_over_day_percent_change
-
-
-MAJOR_INDEXES = ["SPY", "QQQ", "DIA"]
 
 
 class MarketService(IMarketService):
