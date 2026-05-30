@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
+from fastapi import HTTPException, status
 from app.clients.alpha_vantage_client import AlphaVantageClient
+from app.core.config import config
 from app.schemas.stocks import (
     OHLCV,
     GetStocksPriceResponse,
@@ -64,6 +66,17 @@ class StocksService(IStocksService):
         indicators: list[Indicator],
         filters: list[ScanFilter],
     ) -> ScanMarketResponse:
+        if len(symbols) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one symbol is required",
+            )
+        if len(symbols) > config.MAX_SCAN_SYMBOLS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Scan limited to {config.MAX_SCAN_SYMBOLS} symbols per request",
+            )
+
         matches = []
         for symbol in symbols:
             stock_symbol_info = await self.alphavantage_client.get_symbol_info(symbol)

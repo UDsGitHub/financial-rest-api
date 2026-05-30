@@ -4,6 +4,7 @@ from app.schemas.stocks import Symbol
 from app.schemas.watchlist import Watchlist
 from app.clients.alpha_vantage_client import AlphaVantageClient
 from app.clients.redis_client import redis_client
+from app.core.config import config
 from app.core.logger import logger
 from app.schemas.logger import LoggerConstants
 from app.services.watchlist.watchlist_service_interface import IWatchlistService
@@ -65,6 +66,13 @@ class WatchlistService(IWatchlistService):
                     detail=f"Symbol {symbol} already in watchlist",
                 )
 
+            symbols = await self.get_symbols(ip)
+            if len(symbols) >= config.MAX_WATCHLIST_SIZE:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    detail=f"Watchlist limited to {config.MAX_WATCHLIST_SIZE} symbols",
+                )
+
             symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
             await redis_client.hset(
                 f"{key}:set:{symbol}",
@@ -87,6 +95,11 @@ class WatchlistService(IWatchlistService):
                 raise HTTPException(
                     status.HTTP_409_CONFLICT,
                     detail=f"Symbol {symbol} already in watchlist",
+                )
+            if len(watchlist.get_symbols(ip)) >= config.MAX_WATCHLIST_SIZE:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST,
+                    detail=f"Watchlist limited to {config.MAX_WATCHLIST_SIZE} symbols",
                 )
             symbol_info = await self.alphavantage_client.get_symbol_info(symbol)
             return watchlist.add_item(

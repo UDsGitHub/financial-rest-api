@@ -1,8 +1,10 @@
 from datetime import datetime
 
 import pytest
+from fastapi import HTTPException
 from unittest.mock import AsyncMock
 
+from app.core.config import config
 from app.schemas.stocks import Indicator, ScanFilter, SeriesType, TimeInterval
 from app.services.stocks.stocks_service import StocksService
 from tests.data.test_data import test_symbol_info
@@ -66,3 +68,13 @@ class TestStocksService:
         assert scan_result.total_scanned == 1
         assert scan_result.total_matched == 1
         assert scan_result.results[0].symbol == "IBM"
+
+    @pytest.mark.asyncio
+    async def test_scan_market_rejects_too_many_symbols(self, service):
+        symbols = [f"SYM{i}" for i in range(config.MAX_SCAN_SYMBOLS + 1)]
+
+        with pytest.raises(HTTPException) as exc:
+            await service.scan_market(symbols, [], [])
+
+        assert exc.value.status_code == 400
+        assert "Scan limited" in exc.value.detail

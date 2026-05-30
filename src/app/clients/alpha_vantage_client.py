@@ -2,6 +2,7 @@ import json
 from fastapi import HTTPException, status
 import httpx
 import redis
+from app.clients.av_budget import reserve_upstream_call
 from app.core.config import config
 from app.schemas.stocks import OHLCV, TimeInterval
 from app.schemas.market import Market
@@ -17,11 +18,20 @@ class AlphaVantageClient:
     def get_cache_key(self):
         return f"cache:api-requests"
 
-    async def log_api_request(self, key: str, value: str):
+    async def _log_api_request(self, key: str, value: str):
         try:
             await redis_client.set(key, value, ex=config.CACHE_TTL)
         except redis.ConnectionError:
             logger.warning(LoggerConstants.CACHE_CONN_ERR)
+
+    async def _fetch_upstream(self, params: dict) -> dict:
+        await reserve_upstream_call()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                BASE_URL,
+                params={**params, "apikey": API_KEY},
+            )
+            return response.json()
 
     async def get_symbol_info(
         self, symbol: str, time_interval: str = "DAILY"
@@ -50,18 +60,9 @@ class AlphaVantageClient:
         if cache_value is not None:
             response_json = json.loads(cache_value)
         else:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{BASE_URL}",
-                    params={
-                        "function": time_series_function,
-                        "symbol": symbol,
-                        "apikey": API_KEY,
-                    },
-                )
-                response_json = response.json()
-
-        # response_json = example_symbol_info
+            response_json = await self._fetch_upstream(
+                {"function": time_series_function, "symbol": symbol}
+            )
 
         if "Error Message" in response_json or "Information" in response_json:
             raise HTTPException(
@@ -70,7 +71,7 @@ class AlphaVantageClient:
             )
 
         if cache_value is None:
-            await self.log_api_request(composed_key, json.dumps(response_json))
+            await self._log_api_request(composed_key, json.dumps(response_json))
 
         time_series_key = f"Time Series ({time_interval.title()})"
         time_series_items = response_json[time_series_key].items()
@@ -110,17 +111,7 @@ class AlphaVantageClient:
         if cache_value is not None:
             response_json = json.loads(cache_value)
         else:
-            async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{BASE_URL}",
-                    params={
-                        "function": "MARKET_STATUS",
-                        "apikey": API_KEY,
-                    },
-                )
-                response_json = response.json()
-
-        # response_json = example_market_status
+            response_json = await self._fetch_upstream({"function": "MARKET_STATUS"})
 
         if (
             "Error Message" in response_json
@@ -134,7 +125,7 @@ class AlphaVantageClient:
             )
 
         if cache_value is None:
-            await self.log_api_request(composed_key, json.dumps(response_json))
+            await self._log_api_request(composed_key, json.dumps(response_json))
 
         markets = response_json["markets"]
         response = []

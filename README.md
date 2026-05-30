@@ -26,7 +26,8 @@ These affect how you use the API:
 | **Rate limit** | 4 HTTP requests per minute per client IP by default (`429` when exceeded). Protects abuse; configurable via env on the server. |
 | **Caching** | Successful Alpha Vantage responses are cached (default **24 hours** for symbol data). Data is **daily OHLCV** (latest bar is typically the previous trading day), not live intraday quotes. Repeated identical upstream queries return cached data. |
 | **Watchlist** | Stored per client IP — no login. Your list is tied to the IP the server sees (behind a proxy, that is usually your public IP). |
-| **Upstream limits** | Alpha Vantage free tier is ~**5 calls/minute** and ~**25/day** per API key (shared by all users of this deployment). Endpoints like **scan**, **watchlist**, and **market status** can trigger multiple upstream calls per request; heavy use may return `503`. |
+| **Upstream limits** | Alpha Vantage free tier is ~**5 calls/minute** and ~**25/day** per API key. The server enforces a global upstream budget (**4/min**, **24/day** by default, cache misses only) and returns `503` when exhausted. |
+| **Scan / watchlist caps** | **3 symbols** max per scan request and **3 symbols** max per watchlist by default (configurable). |
 
 ---
 
@@ -59,7 +60,7 @@ These affect how you use the API:
 
 Threshold filters with a missing or null `value` never match.
 
-**Status codes:** `400` invalid dates · `404` not found · `409` symbol already on watchlist · `429` rate limit · `503` upstream error or rate limit
+**Status codes:** `400` invalid dates or scan/watchlist limits · `404` not found · `409` symbol already on watchlist · `429` rate limit · `503` upstream error or rate limit
 
 ---
 

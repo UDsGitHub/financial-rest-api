@@ -25,6 +25,10 @@ Add your `ALPHA_VANTAGE_API_KEY`. Optional: copy to `.env.local` for overrides (
 | `CACHE_TTL` | `86400` | Seconds to cache successful AV responses (24h; matches daily bar data) |
 | `RATE_LIMIT_WINDOW` | `60` | Rate-limit window in seconds |
 | `MAX_REQUESTS_PER_MINUTE` | `4` | Max HTTP requests per IP per window |
+| `MAX_SCAN_SYMBOLS` | `3` | Max symbols per `/stocks/scan` request |
+| `MAX_WATCHLIST_SIZE` | `3` | Max symbols per client watchlist |
+| `AV_MAX_PER_MINUTE` | `4` | Global upstream calls per minute (cache misses) |
+| `AV_MAX_PER_DAY` | `24` | Global upstream calls per UTC day (cache misses) |
 
 For faster cache turnover while developing, set a lower `CACHE_TTL` in `.env.local` (e.g. `300`).
 

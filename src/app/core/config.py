@@ -19,5 +19,9 @@ class Config:
     CACHE_TTL: int = int(os.getenv("CACHE_TTL", "86400"))
     RATE_LIMIT_WINDOW: int = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
     MAX_REQUESTS_PER_MINUTE: int = int(os.getenv("MAX_REQUESTS_PER_MINUTE", "4"))
+    MAX_SCAN_SYMBOLS: int = int(os.getenv("MAX_SCAN_SYMBOLS", "3"))
+    MAX_WATCHLIST_SIZE: int = int(os.getenv("MAX_WATCHLIST_SIZE", "3"))
+    AV_MAX_PER_MINUTE: int = int(os.getenv("AV_MAX_PER_MINUTE", "4"))
+    AV_MAX_PER_DAY: int = int(os.getenv("AV_MAX_PER_DAY", "24"))
 
 config = Config()

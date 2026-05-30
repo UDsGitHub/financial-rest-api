@@ -1,6 +1,8 @@
 import redis
 import pytest
+from fastapi import HTTPException
 from unittest.mock import AsyncMock
+from app.core.config import config
 from app.services.watchlist import watchlist_service as watchlist_module
 from app.services.watchlist.watchlist_service import WatchlistService
 from tests.data.test_data import test_symbol_info
@@ -63,3 +65,15 @@ class TestWatchlistService:
 
         assert response == "IBM"
         assert await service.get_symbols("test-remove") == []
+
+    @pytest.mark.asyncio
+    async def test_add_item_rejects_when_watchlist_full(self, service):
+        ip = "test-full"
+        for i in range(config.MAX_WATCHLIST_SIZE):
+            await service.add_item(ip, f"SYM{i}")
+
+        with pytest.raises(HTTPException) as exc:
+            await service.add_item(ip, "ONE_TOO_MANY")
+
+        assert exc.value.status_code == 400
+        assert "Watchlist limited" in exc.value.detail
